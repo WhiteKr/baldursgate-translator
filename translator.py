@@ -5,8 +5,8 @@ import shutil
 from googletrans import Translator
 
 def backup_original_file(file_path):
-    # 원본 파일을 백업합니다. 예를 들어, 'original.xml' 파일을 'original.xml.bak'으로 복사합니다.
-    backup_path = file_path + ".bak"
+    base_name = os.path.splitext(file_path)[0]
+    backup_path = f"{base_name}_bak.xml"
     shutil.copy(file_path, backup_path)
     print(f"Backup of the original file is created at {backup_path}")
 
@@ -54,35 +54,32 @@ def translate_xml_content(file_path, target_language="ko"):
     for idx, content_elem in enumerate(root.findall('.//content'), start=1):
         original_text = content_elem.text
         if original_text is not None:
-            # LSTag 부분을 보존하며 번역합니다.
             translated_parts = []
             prev_end = 0
             lstag_placeholders = []
-            for lstag in content_elem.findall('.//LSTag'):
-                # LSTag와 Tooltip 속성값을 임시로 치환합니다.
-                original_lstag_str = ET.tostring(lstag, encoding='unicode')
-                placeholder = f"LSTAG_PLACEHOLDER_{idx}_{lstag_placeholders.count(original_lstag_str)}"
-                lstag.set('Tooltip', placeholder)  # 임시 치환
-                lstag_placeholders.append((placeholder, lstag.attrib['Tooltip']))
-                content_elem.remove(lstag)  # XML에서 임시로 제거
 
-                start = original_text.find(ET.tostring(lstag, encoding='unicode').decode('utf-8'))
-                end = start + len(ET.tostring(lstag, encoding='unicode').decode('utf-8'))
+            # 모든 LSTag 태그를 찾아서 임시 플레이스홀더로 교체합니다.
+            for lstag in content_elem.findall('.//LSTag'):
+                lstag_str = ET.tostring(lstag, encoding='unicode')
+                placeholder = f"LSTAG_PLACEHOLDER_{idx}_{len(lstag_placeholders)}"
+                lstag_placeholders.append((placeholder, lstag_str))
+                original_text = original_text.replace(lstag_str, placeholder, 1)
+
+            # 번역할 텍스트를 조각내고 번역합니다.
+            for placeholder, lstag_str in lstag_placeholders:
+                start = original_text.find(placeholder, prev_end)
                 translated_parts.append(google_translate(original_text[prev_end:start], target_language))
-                translated_parts.append(original_lstag_str)
-                prev_end = end
+                translated_parts.append(lstag_str)  # 원본 LSTag 태그를 유지합니다.
+                prev_end = start + len(placeholder)
 
             translated_parts.append(google_translate(original_text[prev_end:], target_language))
             translated_text = ''.join(translated_parts)
 
-            # LSTag와 Tooltip 속성값을 복원합니다.
-            for placeholder, original_value in lstag_placeholders:
-                translated_text = translated_text.replace(placeholder, original_value)
-            
-            # LSTag를 다시 삽입합니다.
+            # 번역된 텍스트에서 placeholder를 원본 LSTag 태그로 교체합니다.
             for placeholder, lstag_str in lstag_placeholders:
-                content_elem.append(ET.fromstring(lstag_str))
+                translated_text = translated_text.replace(placeholder, lstag_str, 1)
 
+            # 결과 출력
             print(f"Translating '{file_path}' - Line {idx}")
             print(f"Original: {original_text}")
             print(f"Translated: {translated_text}")
