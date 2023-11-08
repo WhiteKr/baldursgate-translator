@@ -4,6 +4,8 @@ import time
 import shutil
 from googletrans import Translator
 
+from TooltipTranslationSync import syncTrans
+
 def backup_original_file(file_path):
     base_name = os.path.splitext(file_path)[0]
     backup_path = f"{base_name}_bak.xml"
@@ -76,7 +78,7 @@ def main():
             backup_original_file(file_name)  # 백업 생성
             translate_xml_content(file_name)
     
-    input("Translation completed! Press any key to exit...")
+    syncTrans()
 
 if __name__ == '__main__':
     main()
