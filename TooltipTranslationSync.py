@@ -50,22 +50,24 @@ def process_files(original_file_path, backup_file_path):
     
     return updated_file_path
 
-# Find all xml files in the same directory as the script
-script_directory = os.path.dirname(os.path.realpath(__file__))
-xml_files = [file for file in os.listdir(script_directory) if file.endswith('.xml') and not file.endswith('_bak.xml')]
+def syncTrans():
+    # Find all xml files in the same directory as the script
+    script_directory = os.path.dirname(os.path.realpath(__file__))
+    xml_files = [file for file in os.listdir(script_directory) if file.endswith('.xml') and not file.endswith('_bak.xml')]
 
-# Process each xml file if its corresponding _bak.xml file exists
-for file_name in xml_files:
-    original_file_path = os.path.join(script_directory, file_name)
-    backup_file_name = file_name.replace('.xml', '_bak.xml')
-    backup_file_path = os.path.join(script_directory, backup_file_name)
+    # Process each xml file if its corresponding _bak.xml file exists
+    for file_name in xml_files:
+        original_file_path = os.path.join(script_directory, file_name)
+        backup_file_name = file_name.replace('.xml', '_bak.xml')
+        backup_file_path = os.path.join(script_directory, backup_file_name)
 
-    if os.path.exists(backup_file_path):
-        try:
-            updated_file = process_files(original_file_path, backup_file_path)
-            print(f"Updated file saved to: {updated_file}")
-        except Exception as e:
-            print(f"An error occurred while processing {file_name}: {e}")
-    else:
-        print(f"{file_name} does not have a corresponding backup file.")
-input("Press any key to exit...")
+        if os.path.exists(backup_file_path):
+            try:
+                updated_file = process_files(original_file_path, backup_file_path)
+                print(f"Updated file saved to: {updated_file}")
+            except Exception as e:
+                print(f"An error occurred while processing {file_name}: {e}")
+        else:
+            print(f"{file_name} does not have a corresponding backup file.")
+            
+    input("Translation completed! Press any key to exit...")

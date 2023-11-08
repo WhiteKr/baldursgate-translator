@@ -4,6 +4,8 @@ import time
 import shutil
 from googletrans import Translator
 
+from TooltipTranslationSync import syncTrans
+
 def backup_original_file(file_path):
     base_name = os.path.splitext(file_path)[0]
     backup_path = f"{base_name}_bak.xml"
@@ -26,26 +28,6 @@ def google_translate(text, target_language="ko"):
             else:
                 print("Maximum retries reached. Translation failed.")
     return None
-
-def restore_lstag(original_text, translated_text):
-    """LSTag 태그의 원본 내용을 복원합니다."""
-    # LSTag를 찾기 위한 임시 태그를 생성합니다.
-    placeholder = "LSTAG_PLACEHOLDER"
-    lstag_pairs = []
-    
-    # 원본에서 LSTag 위치와 내용을 추출합니다.
-    while "<LSTag" in original_text:
-        start = original_text.find("<LSTag")
-        end = original_text.find(">", start) + 1
-        lstag_content = original_text[start:end]
-        lstag_pairs.append((placeholder, lstag_content))
-        original_text = original_text.replace(lstag_content, placeholder, 1)
-    
-    # 번역된 텍스트에서 placeholder를 원본 LSTag 내용으로 교체합니다.
-    for placeholder, lstag_content in lstag_pairs:
-        translated_text = translated_text.replace(placeholder, lstag_content, 1)
-    
-    return translated_text
 
 def translate_xml_content(file_path, target_language="ko"):
     tree = ET.parse(file_path)
@@ -96,7 +78,7 @@ def main():
             backup_original_file(file_name)  # 백업 생성
             translate_xml_content(file_name)
     
-    input("Translation completed! Press any key to exit...")
+    syncTrans()
 
 if __name__ == '__main__':
     main()
